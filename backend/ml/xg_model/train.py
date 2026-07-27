@@ -11,7 +11,7 @@ import xgboost as xgb
 
 from app.core.database import SessionLocal
 from app.models.models import Event
-from backend.ml.xg_model.features import extract_shot_features
+from ml.xg_model.features import extract_shot_features
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

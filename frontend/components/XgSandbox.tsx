@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Pitch from "./Pitch";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function XgSandbox() {
   const [shotX, setShotX] = useState<number>(105.0);
@@ -40,7 +41,7 @@ export default function XgSandbox() {
   const triggerPrediction = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/predict/xg", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/predict/xg`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

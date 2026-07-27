@@ -3,7 +3,7 @@ import pickle
 import logging
 import numpy as np
 from app.core.config import settings
-from backend.ml.xg_model.features import extract_shot_features
+from ml.xg_model.features import extract_shot_features
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Send, Bot, User, Sparkles, FileText, ChevronRight } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 interface Citation {
   source_id: number;
@@ -47,7 +48,7 @@ export default function AssistantChat() {
     setSelectedCitation(null);
 
     try {
-      const res = await fetch("http://localhost:8000/api/v1/assistant/ask", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/assistant/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: text })

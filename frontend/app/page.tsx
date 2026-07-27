@@ -19,6 +19,7 @@ import PassingNetwork, { PassNode, PassLink } from "@/components/PassingNetwork"
 import PlayerRadar, { MatchPlayer } from "@/components/PlayerRadar";
 import XgSandbox from "@/components/XgSandbox";
 import AssistantChat from "@/components/AssistantChat";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"match" | "similarity" | "sandbox" | "assistant">("match");
@@ -73,7 +74,7 @@ export default function Home() {
 
   const fetchCompetitions = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/competitions");
+      const res = await fetch(`${API_BASE_URL}/api/v1/competitions`);
       if (res.ok) {
         const data = await res.json();
         setCompetitions(data);
@@ -95,7 +96,7 @@ export default function Home() {
 
   const fetchMatches = async (compId: number, seasonId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/matches?competition_id=${compId}&season_id=${seasonId}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/matches?competition_id=${compId}&season_id=${seasonId}`);
       if (res.ok) {
         const data = await res.json();
         setMatches(data);
@@ -118,15 +119,15 @@ export default function Home() {
   const fetchMatchDetails = async (matchId: number) => {
     try {
       // 1. Stats
-      const resStats = await fetch(`http://localhost:8000/api/v1/matches/${matchId}/stats`);
+      const resStats = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/stats`);
       if (resStats.ok) setMatchStats(await resStats.json());
 
       // 2. Shots
-      const resShots = await fetch(`http://localhost:8000/api/v1/matches/${matchId}/shot-map`);
+      const resShots = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/shot-map`);
       if (resShots.ok) setShots(await resShots.json());
 
       // 3. Passing network
-      const resPass = await fetch(`http://localhost:8000/api/v1/matches/${matchId}/passing-network?team_id=1`);
+      const resPass = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/passing-network?team_id=1`);
       if (resPass.ok) setPassingNetwork(await resPass.json());
     } catch (e) {
       // Set mock match values
@@ -159,7 +160,7 @@ export default function Home() {
 
   const fetchPlayers = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/players");
+      const res = await fetch(`${API_BASE_URL}/api/v1/players`);
       if (res.ok) {
         const data = await res.json();
         setPlayersList(data);
@@ -180,7 +181,7 @@ export default function Home() {
 
   const fetchPlayerSimilarity = async (playerId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/players/${playerId}/similar?top_n=3`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/players/${playerId}/similar?top_n=3`);
       if (res.ok) {
         const data = await res.json();
         setSimilarityData(data);
@@ -234,7 +235,7 @@ export default function Home() {
   const triggerEtlPipeline = async () => {
     setEtlRunning(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/etl/run", { method: "POST" });
+      const res = await fetch(`${API_BASE_URL}/api/v1/etl/run`, { method: "POST" });
       if (res.ok) alert("Data Ingestion ETL pipeline started in the background. Fresh StatsBomb data will load shortly!");
     } catch (e) {
       alert("Pipeline server offline. Simulation modes are running.");
@@ -246,7 +247,7 @@ export default function Home() {
   const triggerModelRetraining = async () => {
     setTrainingRunning(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/ml/train", { method: "POST" });
+      const res = await fetch(`${API_BASE_URL}/api/v1/ml/train`, { method: "POST" });
       if (res.ok) alert("ML Model training initiated in the background! Re-evaluating xG classifications and similarity vectors.");
     } catch (e) {
       alert("Model pipeline server offline. Simulation models loaded.");

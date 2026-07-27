@@ -2,7 +2,7 @@ import os
 import pytest
 from app.services.xg_service import xg_service
 from app.services.similarity_service import similarity_service
-from backend.ml.xg_model.features import extract_shot_features, calculate_distance, calculate_angle
+from ml.xg_model.features import extract_shot_features, calculate_distance, calculate_angle
 
 def test_xg_inference_bounds():
     """Verify that the xG model outputs are properly bounded probabilities."""

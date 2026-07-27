@@ -30,7 +30,7 @@ class SimilarityService:
     def _trigger_training(self):
         """Train model in-process to create fallback dataset."""
         try:
-            from backend.ml.similarity.train_similarity import train_similarity_model
+            from ml.similarity.train_similarity import train_similarity_model
             train_similarity_model()
             # Try reloading
             if os.path.exists(self.model_path):
