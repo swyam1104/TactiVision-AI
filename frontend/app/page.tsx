@@ -145,24 +145,27 @@ export default function Home() {
       if (!resPass.ok) throw new Error("Pass request failed");
       setPassingNetwork(await resPass.json());
     } catch (e) {
-      // Set mock match values
-      const isWC = matchId === 432204;
+      // Set dynamic mock match values
+      const currentMatch = matches.find(m => m.id === matchId);
+      const homeName = currentMatch?.home_team?.name || "Home Team";
+      const awayName = currentMatch?.away_team?.name || "Away Team";
+
       setMatchStats({
         match_id: matchId,
-        home_team: { name: isWC ? "France" : "Arsenal", score: isWC ? 4 : 2, possession: 56.4, shots: 14, shots_on_target: 6, xg: 1.78, passes: 512, pass_completion: 84.5 },
-        away_team: { name: isWC ? "Argentina" : "Chelsea", score: isWC ? 3 : 1, possession: 43.6, shots: 9, shots_on_target: 3, xg: 0.94, passes: 384, pass_completion: 78.1 }
+        home_team: { name: homeName, score: 3, possession: 54.2, shots: 14, shots_on_target: 6, xg: 2.15, passes: 520, pass_completion: 86.1 },
+        away_team: { name: awayName, score: 2, possession: 45.8, shots: 10, shots_on_target: 4, xg: 1.42, passes: 410, pass_completion: 80.5 }
       });
       setShots([
-        {id: "s1", player_name: isWC ? "Griezmann" : "Bukayo Saka", team_name: isWC ? "France" : "Arsenal", minute: 14, second: 22, x: 108.5, y: 32.4, outcome: "Goal", xg: 0.38, body_part: "Right Foot", under_pressure: true},
-        {id: "s2", player_name: isWC ? "Mbappe" : "Kai Havertz", team_name: isWC ? "France" : "Arsenal", minute: 72, second: 14, x: 112.0, y: 41.5, outcome: "Goal", xg: 0.44, body_part: "Head", under_pressure: false},
-        {id: "s3", player_name: isWC ? "Di Maria" : "Nicolas Jackson", team_name: isWC ? "Argentina" : "Chelsea", minute: 44, second: 50, x: 114.2, y: 38.0, outcome: "Goal", xg: 0.65, body_part: "Right Foot", under_pressure: true}
+        {id: "s1", player_name: `${homeName} Forward`, team_name: homeName, minute: 18, second: 22, x: 108.5, y: 32.4, outcome: "Goal", xg: 0.42, body_part: "Right Foot", under_pressure: true},
+        {id: "s2", player_name: `${homeName} Striker`, team_name: homeName, minute: 64, second: 14, x: 112.0, y: 41.5, outcome: "Goal", xg: 0.58, body_part: "Head", under_pressure: false},
+        {id: "s3", player_name: `${awayName} Winger`, team_name: awayName, minute: 79, second: 50, x: 114.2, y: 38.0, outcome: "Goal", xg: 0.35, body_part: "Left Foot", under_pressure: true}
       ]);
       setPassingNetwork({
         nodes: [
-          {id: 1, name: "Saliba", x: 34.0, y: 52.0, volume: 55},
-          {id: 2, name: "Odegaard", x: 76.0, y: 50.0, volume: 48},
-          {id: 3, name: "Saka", x: 88.0, y: 66.0, volume: 38},
-          {id: 4, name: "Havertz", x: 95.0, y: 40.0, volume: 29}
+          {id: 1, name: `${homeName} CB`, x: 34.0, y: 52.0, volume: 55},
+          {id: 2, name: `${homeName} CM`, x: 76.0, y: 50.0, volume: 48},
+          {id: 3, name: `${homeName} RW`, x: 88.0, y: 66.0, volume: 38},
+          {id: 4, name: `${homeName} ST`, x: 95.0, y: 40.0, volume: 29}
         ],
         links: [
           {source: 1, target: 2, count: 18},
