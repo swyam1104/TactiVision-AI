@@ -75,12 +75,13 @@ export default function Home() {
   const fetchCompetitions = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/competitions`);
-      if (res.ok) {
-        const data = await res.json();
+      if (!res.ok) throw new Error("Competitions request failed");
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
         setCompetitions(data);
-        if (data.length > 0) {
-          setSelectedComp(`${data[0].competition_id}-${data[0].season_id}`);
-        }
+        setSelectedComp(`${data[0].competition_id}-${data[0].season_id}`);
+      } else {
+        throw new Error("No competitions found");
       }
     } catch (e) {
       loggerFallback("Competitions server offline. Loading mock sets.");
@@ -100,12 +101,13 @@ export default function Home() {
   const fetchMatches = async (compId: number, seasonId: number) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/matches?competition_id=${compId}&season_id=${seasonId}`);
-      if (res.ok) {
-        const data = await res.json();
+      if (!res.ok) throw new Error("Matches request failed");
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
         setMatches(data);
-        if (data.length > 0) {
-          setSelectedMatchId(data[0].id);
-        }
+        setSelectedMatchId(data[0].id);
+      } else {
+        throw new Error("No matches found");
       }
     } catch (e) {
       let mockMatches = [
@@ -130,15 +132,18 @@ export default function Home() {
     try {
       // 1. Stats
       const resStats = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/stats`);
-      if (resStats.ok) setMatchStats(await resStats.json());
+      if (!resStats.ok) throw new Error("Stats request failed");
+      setMatchStats(await resStats.json());
 
       // 2. Shots
       const resShots = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/shot-map`);
-      if (resShots.ok) setShots(await resShots.json());
+      if (!resShots.ok) throw new Error("Shots request failed");
+      setShots(await resShots.json());
 
       // 3. Passing network
       const resPass = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/passing-network?team_id=1`);
-      if (resPass.ok) setPassingNetwork(await resPass.json());
+      if (!resPass.ok) throw new Error("Pass request failed");
+      setPassingNetwork(await resPass.json());
     } catch (e) {
       // Set mock match values
       const isWC = matchId === 432204;
@@ -171,12 +176,13 @@ export default function Home() {
   const fetchPlayers = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/players`);
-      if (res.ok) {
-        const data = await res.json();
+      if (!res.ok) throw new Error("Players request failed");
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
         setPlayersList(data);
-        if (data.length > 0) {
-          setSelectedPlayerId(data[0].player_id);
-        }
+        setSelectedPlayerId(data[0].player_id);
+      } else {
+        throw new Error("No players found");
       }
     } catch (e) {
       const mockPlayers = [
@@ -192,12 +198,13 @@ export default function Home() {
   const fetchPlayerSimilarity = async (playerId: number) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/players/${playerId}/similar?top_n=3`);
-      if (res.ok) {
-        const data = await res.json();
+      if (!res.ok) throw new Error("Similarity request failed");
+      const data = await res.json();
+      if (data && data.similar_players && data.similar_players.length > 0) {
         setSimilarityData(data);
-        if (data.similar_players && data.similar_players.length > 0) {
-          setSelectedMatchPlayer(data.similar_players[0]);
-        }
+        setSelectedMatchPlayer(data.similar_players[0]);
+      } else {
+        throw new Error("No similarity data found");
       }
     } catch (e) {
       // Mock player similarity values
