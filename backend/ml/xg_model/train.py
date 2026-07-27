@@ -1,6 +1,7 @@
 import os
 import pickle
 import logging
+from datetime import datetime
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -11,6 +12,7 @@ import xgboost as xgb
 
 from app.core.database import SessionLocal
 from app.models.models import Event
+from app.core.config import settings
 from ml.xg_model.features import extract_shot_features
 
 # Setup logging

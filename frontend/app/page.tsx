@@ -86,11 +86,14 @@ export default function Home() {
       loggerFallback("Competitions server offline. Loading mock sets.");
       // Standard local fallback
       const mockComps = [
-        {competition_id: 37, season_id: 4, competition_name: "Premier League", season_name: "2015/2016"},
-        {competition_id: 43, season_id: 3, competition_name: "FIFA World Cup", season_name: "2018"}
+        {competition_id: 2, season_id: 27, competition_name: "Premier League", season_name: "2015/2016"},
+        {competition_id: 43, season_id: 3, competition_name: "FIFA World Cup", season_name: "2018"},
+        {competition_id: 43, season_id: 106, competition_name: "FIFA World Cup", season_name: "2022"},
+        {competition_id: 11, season_id: 90, competition_name: "La Liga", season_name: "2020/2021"},
+        {competition_id: 37, season_id: 4, competition_name: "FA Women's Super League", season_name: "2018/2019"}
       ];
       setCompetitions(mockComps);
-      setSelectedComp("37-4");
+      setSelectedComp("2-27");
     }
   };
 
@@ -105,12 +108,19 @@ export default function Home() {
         }
       }
     } catch (e) {
-      const mockMatches = compId === 37 ? [
+      let mockMatches = [
         {id: 3754058, home_team: {name: "Arsenal"}, away_team: {name: "Chelsea"}, match_date: "2016-05-15"},
         {id: 3754059, home_team: {name: "Manchester City"}, away_team: {name: "Liverpool"}, match_date: "2016-04-10"}
-      ] : [
-        {id: 432204, home_team: {name: "France"}, away_team: {name: "Argentina"}, match_date: "2018-06-30"}
       ];
+      if (compId === 43 && seasonId === 3) {
+        mockMatches = [{id: 432204, home_team: {name: "France"}, away_team: {name: "Argentina"}, match_date: "2018-06-30"}];
+      } else if (compId === 43 && seasonId === 106) {
+        mockMatches = [{id: 3869685, home_team: {name: "Argentina"}, away_team: {name: "France"}, match_date: "2022-12-18"}];
+      } else if (compId === 11) {
+        mockMatches = [{id: 3773457, home_team: {name: "Barcelona"}, away_team: {name: "Real Madrid"}, match_date: "2020-10-24"}];
+      } else if (compId === 37) {
+        mockMatches = [{id: 2275050, home_team: {name: "Chelsea FC Women"}, away_team: {name: "Arsenal WFC"}, match_date: "2019-01-13"}];
+      }
       setMatches(mockMatches);
       setSelectedMatchId(mockMatches[0].id);
     }
