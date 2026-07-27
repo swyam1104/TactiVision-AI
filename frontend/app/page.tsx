@@ -110,21 +110,77 @@ export default function Home() {
         throw new Error("No matches found");
       }
     } catch (e) {
-      let mockMatches = [
-        {id: 3754058, home_team: {name: "Arsenal"}, away_team: {name: "Chelsea"}, match_date: "2016-05-15"},
-        {id: 3754059, home_team: {name: "Manchester City"}, away_team: {name: "Liverpool"}, match_date: "2016-04-10"}
-      ];
-      if (compId === 43 && seasonId === 3) {
-        mockMatches = [{id: 432204, home_team: {name: "France"}, away_team: {name: "Argentina"}, match_date: "2018-06-30"}];
-      } else if (compId === 43 && seasonId === 106) {
-        mockMatches = [{id: 3869685, home_team: {name: "Argentina"}, away_team: {name: "France"}, match_date: "2022-12-18"}];
-      } else if (compId === 11) {
-        mockMatches = [{id: 3773457, home_team: {name: "Barcelona"}, away_team: {name: "Real Madrid"}, match_date: "2020-10-24"}];
-      } else if (compId === 37) {
-        mockMatches = [{id: 2275050, home_team: {name: "Chelsea FC Women"}, away_team: {name: "Arsenal WFC"}, match_date: "2019-01-13"}];
+      let mockMatches: any[] = [];
+      if (compId === 2) { // Premier League 2015/2016
+        mockMatches = [
+          {id: 3753983, home_team: {name: "Swansea City"}, away_team: {name: "Arsenal"}, match_date: "2015-10-31"},
+          {id: 3754047, home_team: {name: "Liverpool"}, away_team: {name: "Swansea City"}, match_date: "2015-11-29"},
+          {id: 3754058, home_team: {name: "Leicester City"}, away_team: {name: "AFC Bournemouth"}, match_date: "2016-01-02"},
+          {id: 3754117, home_team: {name: "Aston Villa"}, away_team: {name: "Arsenal"}, match_date: "2015-12-13"},
+          {id: 3754129, home_team: {name: "Arsenal"}, away_team: {name: "Liverpool"}, match_date: "2015-08-24"},
+          {id: 3754160, home_team: {name: "Arsenal"}, away_team: {name: "Sunderland"}, match_date: "2015-12-05"},
+          {id: 3754217, home_team: {name: "Chelsea"}, away_team: {name: "Arsenal"}, match_date: "2015-09-19"},
+          {id: 3754245, home_team: {name: "West Bromwich Albion"}, away_team: {name: "Sunderland"}, match_date: "2015-10-17"},
+          {id: 3754296, home_team: {name: "Arsenal"}, away_team: {name: "Manchester City"}, match_date: "2015-12-21"},
+          {id: 3754309, home_team: {name: "Southampton"}, away_team: {name: "Arsenal"}, match_date: "2015-12-26"}
+        ];
+      } else if (compId === 43 && seasonId === 3) { // World Cup 2018
+        mockMatches = [
+          {id: 7534, home_team: {name: "Germany"}, away_team: {name: "Mexico"}, match_date: "2018-06-17"},
+          {id: 7538, home_team: {name: "Sweden"}, away_team: {name: "South Korea"}, match_date: "2018-06-18"},
+          {id: 7539, home_team: {name: "Poland"}, away_team: {name: "Senegal"}, match_date: "2018-06-19"},
+          {id: 7543, home_team: {name: "Iran"}, away_team: {name: "Spain"}, match_date: "2018-06-20"},
+          {id: 7544, home_team: {name: "Uruguay"}, away_team: {name: "Saudi Arabia"}, match_date: "2018-06-20"},
+          {id: 7546, home_team: {name: "France"}, away_team: {name: "Peru"}, match_date: "2018-06-21"},
+          {id: 7550, home_team: {name: "Serbia"}, away_team: {name: "Switzerland"}, match_date: "2018-06-22"},
+          {id: 7554, home_team: {name: "England"}, away_team: {name: "Panama"}, match_date: "2018-06-24"},
+          {id: 7584, home_team: {name: "Belgium"}, away_team: {name: "Japan"}, match_date: "2018-07-02"},
+          {id: 8650, home_team: {name: "Brazil"}, away_team: {name: "Belgium"}, match_date: "2018-07-06"}
+        ];
+      } else if (compId === 43 && seasonId === 106) { // World Cup 2022
+        mockMatches = [
+          {id: 3857255, home_team: {name: "Japan"}, away_team: {name: "Spain"}, match_date: "2022-12-01"},
+          {id: 3857271, home_team: {name: "England"}, away_team: {name: "Iran"}, match_date: "2022-11-21"},
+          {id: 3857272, home_team: {name: "England"}, away_team: {name: "United States"}, match_date: "2022-11-25"},
+          {id: 3857273, home_team: {name: "Wales"}, away_team: {name: "Iran"}, match_date: "2022-11-25"},
+          {id: 3857274, home_team: {name: "Netherlands"}, away_team: {name: "Ecuador"}, match_date: "2022-11-25"},
+          {id: 3857275, home_team: {name: "Tunisia"}, away_team: {name: "France"}, match_date: "2022-11-30"},
+          {id: 3857276, home_team: {name: "Canada"}, away_team: {name: "Morocco"}, match_date: "2022-12-01"},
+          {id: 3857277, home_team: {name: "Morocco"}, away_team: {name: "Croatia"}, match_date: "2022-11-23"},
+          {id: 3857278, home_team: {name: "Iran"}, away_team: {name: "United States"}, match_date: "2022-11-29"},
+          {id: 3857296, home_team: {name: "Croatia"}, away_team: {name: "Belgium"}, match_date: "2022-12-01"}
+        ];
+      } else if (compId === 11) { // La Liga 2020/2021
+        mockMatches = [
+          {id: 3773386, home_team: {name: "Deportivo Alavés"}, away_team: {name: "Barcelona"}, match_date: "2020-10-31"},
+          {id: 3773457, home_team: {name: "Barcelona"}, away_team: {name: "Celta Vigo"}, match_date: "2021-05-16"},
+          {id: 3773466, home_team: {name: "Celta Vigo"}, away_team: {name: "Barcelona"}, match_date: "2020-10-01"},
+          {id: 3773497, home_team: {name: "Real Madrid"}, away_team: {name: "Barcelona"}, match_date: "2021-04-10"},
+          {id: 3773565, home_team: {name: "Granada"}, away_team: {name: "Barcelona"}, match_date: "2021-01-09"},
+          {id: 3773585, home_team: {name: "Barcelona"}, away_team: {name: "Real Madrid"}, match_date: "2020-10-24"},
+          {id: 3773593, home_team: {name: "Barcelona"}, away_team: {name: "Villarreal"}, match_date: "2020-09-27"},
+          {id: 3773631, home_team: {name: "Real Betis"}, away_team: {name: "Barcelona"}, match_date: "2021-02-07"},
+          {id: 3773660, home_team: {name: "Barcelona"}, away_team: {name: "Levante UD"}, match_date: "2020-12-13"},
+          {id: 3773665, home_team: {name: "Osasuna"}, away_team: {name: "Barcelona"}, match_date: "2021-03-06"}
+        ];
+      } else if (compId === 37) { // FA Women's Super League 2018/2019
+        mockMatches = [
+          {id: 19730, home_team: {name: "Chelsea FCW"}, away_team: {name: "Brighton & Hove Albion WFC"}, match_date: "2018-09-30"},
+          {id: 19736, home_team: {name: "Chelsea FCW"}, away_team: {name: "Arsenal WFC"}, match_date: "2018-10-14"},
+          {id: 19745, home_team: {name: "Brighton & Hove Albion WFC"}, away_team: {name: "Yeovil Town LFC"}, match_date: "2018-10-28"},
+          {id: 19746, home_team: {name: "Everton LFC"}, away_team: {name: "West Ham United LFC"}, match_date: "2018-10-28"},
+          {id: 19769, home_team: {name: "Brighton & Hove Albion WFC"}, away_team: {name: "West Ham United LFC"}, match_date: "2018-12-02"},
+          {id: 19770, home_team: {name: "Manchester City WFC"}, away_team: {name: "Arsenal WFC"}, match_date: "2018-12-02"},
+          {id: 19771, home_team: {name: "Birmingham City WFC"}, away_team: {name: "Yeovil Town LFC"}, match_date: "2018-12-02"},
+          {id: 19772, home_team: {name: "Chelsea FCW"}, away_team: {name: "Reading WFC"}, match_date: "2018-12-02"},
+          {id: 19778, home_team: {name: "Manchester City WFC"}, away_team: {name: "Birmingham City WFC"}, match_date: "2018-12-09"},
+          {id: 19820, home_team: {name: "Reading WFC"}, away_team: {name: "Chelsea FCW"}, match_date: "2019-05-11"}
+        ];
       }
       setMatches(mockMatches);
-      setSelectedMatchId(mockMatches[0].id);
+      if (mockMatches.length > 0) {
+        setSelectedMatchId(mockMatches[0].id);
+      }
     }
   };
 
