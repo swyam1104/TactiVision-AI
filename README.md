@@ -19,10 +19,6 @@ Instead of simply presenting raw statistics, TactiVision AI is designed around a
 **Live Application:**  
 https://tacti-vision-ai211.vercel.app/
 
-### ⚙️ Backend API
-
-**Backend:**  
-https://tactivision-backend-production.up.railway.app
 
 ### 📦 Source Code
 
