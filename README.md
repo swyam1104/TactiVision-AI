@@ -1,108 +1,207 @@
-# TactiVision AI — Soccer Intelligence & Tactical Analysis Platform
+# ⚽ TactiVision AI
 
-TactiVision AI is an end-to-end soccer analytics and tactical decision support system designed for modern coaching and recruitment departments. The platform ingests event-level match data, engineers specialized spatial features, trains an explainable Expected Goals (xG) model, runs player similarity nearest-neighbors comparisons, maps passing networks, and serves a citation-grounded RAG (Retrieval-Augmented Generation) assistant.
+### AI-Powered Soccer Intelligence & Tactical Decision Support Platform
 
-## Why I Built This
+TactiVision AI is an end-to-end soccer analytics platform designed to transform event-level football data into actionable intelligence for coaches, analysts, scouts, and recruitment teams.
 
-I built TactiVision AI because I wanted to explore how event-level spatial data can be translated into actionable intelligence for coaches. As a fan of tactical football, I wanted to see if I could build a lightweight, explainable model using StatsBomb's open data that mimics what modern recruitment and analysis departments use.
+The platform combines **football analytics, machine learning, player similarity modeling, tactical visualization, and a citation-grounded AI assistant** into a single product experience.
 
----
+Instead of simply presenting raw statistics, TactiVision AI is designed around a more practical question:
 
-## 1. System Architecture
-
-```
-                                  [ Next.js Attacking Dashboard (Port 3000) ]
-                                                      │
-                                                      ▼ (REST JSON API)
-                                    [ FastAPI Backend Service (Port 8000) ]
-                                     /             │                │            \
-                                    /              │                │             \
-                                   ▼               ▼                ▼              ▼
-                              [ Postgres ]   [ Redis + Celery ]  [ ML Models ]  [ Vector DB (FAISS) ]
-                              - Competitions  - Message Broker   - xG (XGBoost) - Match facts
-                              - Matches       - Async Tasks      - Cosine Sim   - Event snippets
-                              - Events                           - UMAP Coords
-                              - Lineups
-```
-
-- **Data Pipeline**: Idempotent download and ingestion of StatsBomb Open Data. Restructures raw nested event sheets into a normalized PostgreSQL schema (`competitions`, `matches`, `teams`, `players`, `lineups`, `events`).
-- **Explainable ML (xG)**: Fits XGBoost and Logistic Regression on shot features (goalmouth distance, shooting angle, body part, shot category, under pressure). Yields full ROC-AUC evaluation and SHAP feature importance.
-- **Player Similarity**: Aggregated event statistics per player per-90 minutes are scaled using standard normalization. A Nearest Neighbors model with cosine distance calculates top matches, visualized in a UMAP 2D coordinates map.
-- **Coach Assistant (RAG)**: Uses semantic similarity matching over match statistics and fact sheets. Uses an LLM to answer complex tactical questions with inline citations.
-
-### Key Challenges & Learnings
-- **Handling Class Imbalance**: Goals are rare events (~10% of shots). Addressed this in XGBoost by tuning `scale_pos_weight` and evaluating with PR-AUC alongside standard ROC-AUC.
-- **Normalization & Noise Reduction**: Stats were normalized per-90 minutes while filtering out low-sample substitute players to keep player similarity search accurate and prevent skewed vectors.
+> **"What should a coach, analyst, or scout do with this information?"**
 
 ---
 
-## 2. Quickstart (Docker Compose)
+## 🚀 Live Product
 
-To start the entire stack (PostgreSQL + Redis + FastAPI Backend + Celery Worker + Next.js UI) in a containerized environment, simply execute:
+### 🌐 Frontend
 
-```bash
-docker compose up --build
-```
+**Live Application:**  
+https://tacti-vision-ai211.vercel.app/
 
-- **Next.js Attacking UI**: [http://localhost:3000](http://localhost:3000)
-- **FastAPI Backend Swagger**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Database URL**: `postgresql://postgres:postgres@localhost:5432/tactivision`
+### ⚙️ Backend API
 
-*Note: On boot, the FastAPI application automatically initializes database tables, runs the ingestion pipeline for a sample of StatsBomb open data (2018 World Cup & 2015/16 Premier League), trains the initial models, and populates the similarity vector cache.*
+**Backend:**  
+https://tactivision-backend-production.up.railway.app
 
----
+### 📦 Source Code
 
-## 3. Local Development (Manual Setup)
-
-### Backend Setup
-1. Create a virtual environment and install packages:
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
-2. Set configuration parameters in a local `.env` file (optional, defaults are set in `app/core/config.py`):
-   ```env
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tactivision
-   REDIS_URL=redis://localhost:6379/0
-   OPENAI_API_KEY=your_key_here
-   ```
-3. Run the startup script to load data and train initial models:
-   ```bash
-   python ml/etl/ingest.py
-   python ml/xg_model/train.py
-   python ml/similarity/train_similarity.py
-   ```
-4. Run tests:
-   ```bash
-   pytest tests/ -v
-   ```
-5. Run the web server:
-   ```bash
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-### Frontend Setup
-1. Install Node packages and run the development server:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-2. Access the dashboard at `http://localhost:3000`.
+**GitHub Repository:**  
+https://github.com/swyam1104/TactiVision-AI
 
 ---
 
-## 4. Analytical Features & ML Details
+# 📌 Product Overview
 
-### Expected Goals (xG) Features
-- **Distance**: Calculated as Euclidean distance to center of goal mouth `(120, 40)`.
-- **Visible Goal Angle**: The angle in radians spanning between the goalposts `(120, 36)` and `(120, 44)`.
-- **Shot Modifiers**: Categorical binary mappings for headers vs feet, volley shots, direct free-kicks, and defensive pressures.
+Modern football departments work with enormous amounts of event-level match data.
 
-### Player Similarity Index
-- Compiles 12 normalized per-90 metrics (goals, key passes, carries, tackles, recoveries, pressures, shot accuracy, etc.).
-- Measures similarity using **Cosine Distance**:
-  $$\text{Cosine Similarity} = 1 - d_{\text{cosine}} = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2}$$
-- Compares Query and Match candidates side-by-side using percentile metrics mapped on a radar chart.
+However, raw data alone does not automatically produce useful football intelligence.
+
+TactiVision AI attempts to bridge that gap by transforming event data into:
+
+- Expected Goals (xG) analysis
+- Player performance profiles
+- Player similarity recommendations
+- Passing network visualization
+- Tactical insights
+- Match-level statistical intelligence
+- AI-powered football Q&A
+- Explainable machine-learning outputs
+
+The platform uses **StatsBomb Open Data** as its primary event-data source and processes match events into structured analytical features.
+
+---
+
+# 🎯 Why TactiVision AI?
+
+Football analytics tools often suffer from one of two problems:
+
+1. They provide large amounts of data without enough interpretation.
+2. They provide AI-generated insights without sufficient grounding in actual match data.
+
+TactiVision AI was designed to explore a middle ground:
+
+> **Data → Analytics → Intelligence → Decision Support**
+
+The goal is not to replace coaches or analysts.
+
+The goal is to help them **find relevant information faster and make better-informed decisions.**
+
+---
+
+# 🧠 Core Features
+
+## 1. 📈 Expected Goals (xG) Model
+
+TactiVision AI includes an explainable Expected Goals model designed to estimate the probability that a shot results in a goal.
+
+The model uses contextual shot features including:
+
+- Shot location
+- Distance from goal
+- Shooting angle
+- Body part
+- Shot type
+- Header vs foot
+- Volley
+- Direct free-kick
+- Defensive pressure
+- Other event-level shot characteristics
+
+The system supports machine-learning experimentation using:
+
+- XGBoost
+- Logistic Regression
+- Scikit-learn
+- SHAP
+
+### Why it matters
+
+Rather than simply showing:
+
+> "Player X took 5 shots."
+
+the system can help answer:
+
+> "How valuable were those chances?"
+
+and:
+
+> "Which factors contributed most to the model's prediction?"
+
+---
+
+# 2. 👤 Player Similarity Engine
+
+The Player Similarity Engine compares players based on their underlying performance profiles rather than simply comparing goals or assists.
+
+Player statistics are normalized on a **per-90-minute basis** to make comparisons more meaningful.
+
+The system considers metrics such as:
+
+- Goals
+- Key passes
+- Carries
+- Tackles
+- Recoveries
+- Pressures
+- Shots
+- Shot accuracy
+- Other event-derived performance indicators
+
+A nearest-neighbor approach using **cosine similarity** is then used to identify players with comparable profiles.
+
+### Example Use Case
+
+A recruitment analyst could ask:
+
+> "Find players who have a similar statistical profile to this midfielder."
+
+The system can return comparable player profiles and visualize their relative characteristics.
+
+---
+
+# 3. 🗺️ Player Similarity Visualization
+
+The similarity engine can project player vectors into a two-dimensional representation using **UMAP**.
+
+This provides an intuitive visual representation of player clusters.
+
+Players with similar statistical profiles appear closer together, allowing analysts to identify:
+
+- Similar player archetypes
+- Potential recruitment targets
+- Statistical outliers
+- Position-specific clusters
+- Players with unusual profiles
+
+---
+
+# 4. 🔗 Passing Network Analysis
+
+TactiVision AI processes event-level passing data to construct passing networks.
+
+These visualizations can help analyze:
+
+- Passing relationships
+- Central players
+- Possession structure
+- Ball progression patterns
+- Team connectivity
+- Potential tactical bottlenecks
+
+Instead of viewing passing events individually, analysts can examine the broader structure of a team's possession.
+
+---
+
+# 5. 🤖 AI Coach Assistant
+
+TactiVision AI includes an AI-powered tactical assistant designed around **Retrieval-Augmented Generation (RAG)**.
+
+The assistant can answer questions about football data and match statistics while grounding responses in available match information.
+
+The system combines:
+
+- Semantic retrieval
+- Match statistics
+- Structured football data
+- Event information
+- Vector search
+- Large Language Models
+
+The objective is to reduce unsupported AI answers by grounding responses in the platform's underlying football data.
+
+### Example Questions
+
+```text
+Which players created the most chances?
+
+Which players had the strongest attacking output?
+
+Who are the most similar players to this midfielder?
+
+Which team generated better shot quality?
+
+What explains the difference in attacking performance?
+
+Which players appear most involved in progression?
