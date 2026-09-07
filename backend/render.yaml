@@ -2,15 +2,19 @@ services:
   - type: web
     name: tactivision-backend
     env: docker
-    dockerfilePath: Dockerfile
-    dockerContext: .
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
     region: oregon
     plan: free
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        value: sqlite:///./tactivision.db
-      - key: OPENAI_API_KEY
-        sync: false
+        value: sqlite:////data/tactivision.db
       - key: GEMINI_API_KEY
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+    disk:
+      name: tactivision-data
+      mountPath: /data
+      sizeGB: 5

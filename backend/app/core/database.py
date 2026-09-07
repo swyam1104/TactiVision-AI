@@ -27,7 +27,10 @@ def _init_engine():
         return test_engine
     except Exception as e:
         logger.warning(f"PostgreSQL connection to {db_url} failed: {e}. Falling back to local SQLite database.")
-        db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "tactivision.db"))
+        # Use /data volume on Railway, local path for dev
+        data_dir = "/data" if os.path.isdir("/data") and os.access("/data", os.W_OK) else \
+                   os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        db_path = os.path.join(data_dir, "tactivision.db")
         return create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
 
 engine = _init_engine()
