@@ -2,19 +2,35 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
-# Create engine
-if settings.DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(
-        settings.DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-else:
-    engine = create_engine(
-        settings.DATABASE_URL,
-        pool_pre_ping=True,
-        pool_size=10,
-        max_overflow=20
-    )
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Create engine with active connection check and fallback support
+db_url = settings.DATABASE_URL
+
+def _init_engine():
+    if db_url.startswith("sqlite"):
+        return create_engine(db_url, connect_args={"check_same_thread": False})
+    
+    try:
+        test_engine = create_engine(
+            db_url,
+            pool_pre_ping=True,
+            pool_size=10,
+            max_overflow=20,
+            connect_args={"connect_timeout": 2}
+        )
+        with test_engine.connect() as conn:
+            pass
+        return test_engine
+    except Exception as e:
+        logger.warning(f"PostgreSQL connection to {db_url} failed: {e}. Falling back to local SQLite database.")
+        db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "tactivision.db"))
+        return create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+
+engine = _init_engine()
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

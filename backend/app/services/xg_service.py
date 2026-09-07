@@ -2,6 +2,7 @@ import os
 import pickle
 import logging
 import numpy as np
+import pandas as pd
 from app.core.config import settings
 from ml.xg_model.features import extract_shot_features
 
@@ -61,8 +62,8 @@ class XGService:
                 model = self.model_data["model"]
                 feature_names = self.model_data["features"]
                 
-                # Order the features correctly
-                X_vals = [[features[name] for name in feature_names]]
+                # Order the features correctly as a DataFrame with feature names
+                X_vals = pd.DataFrame([[features[name] for name in feature_names]], columns=feature_names)
                 
                 # Predict probability
                 prob = float(model.predict_proba(X_vals)[0, 1])

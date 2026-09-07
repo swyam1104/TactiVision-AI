@@ -94,7 +94,7 @@ export default function AssistantChat() {
           {
             id: `bot-${Date.now()}`,
             sender: "bot",
-            text,
+            text: answer,
             citations
           }
         ]);

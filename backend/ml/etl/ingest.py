@@ -256,6 +256,7 @@ def ingest_events(db: Session, matches: list):
                     end_x, end_y = end_location[0], end_location[1]
                 outcome = pass_info.get("outcome", {}).get("name") or "Complete"
                 
+                recipient = pass_info.get("recipient", {})
                 detail = {
                     "length": pass_info.get("length", 0.0),
                     "angle": pass_info.get("angle", 0.0),
@@ -263,7 +264,9 @@ def ingest_events(db: Session, matches: list):
                     "body_part": pass_info.get("body_part", {}).get("name"),
                     "cross": pass_info.get("cross", False),
                     "assisted_shot_id": pass_info.get("assisted_shot_id"),
-                    "switch": pass_info.get("switch", False)
+                    "switch": pass_info.get("switch", False),
+                    "recipient_id": recipient.get("id"),
+                    "recipient_name": recipient.get("name")
                 }
             elif event_type == "Carry":
                 carry = item.get("carry", {})

@@ -32,7 +32,14 @@ export default function Home() {
   const [matchStats, setMatchStats] = useState<any | null>(null);
   const [shots, setShots] = useState<Shot[]>([]);
   const [passingNetwork, setPassingNetwork] = useState<{nodes: PassNode[], links: PassLink[]} | null>(null);
+  const [passingTeamId, setPassingTeamId] = useState<number | null>(null);
   
+  // Loading & data source indicators
+  const [matchLoading, setMatchLoading] = useState<boolean>(false);
+  const [passingLoading, setPassingLoading] = useState<boolean>(false);
+  const [similarityLoading, setSimilarityLoading] = useState<boolean>(false);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+
   // Similarity states
   const [playersList, setPlayersList] = useState<any[]>([]);
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
@@ -184,49 +191,159 @@ export default function Home() {
     }
   };
 
-  const fetchMatchDetails = async (matchId: number) => {
+  const fetchMatchDetails = async (matchId: number, preferredTeamId?: number) => {
+    setMatchLoading(true);
+    // Clear stale state to prevent displaying Match A data under Match B context
+    setMatchStats(null);
+    setShots([]);
+    setPassingNetwork(null);
+
     try {
-      // 1. Stats
+      // 1. Match Stats
       const resStats = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/stats`);
       if (!resStats.ok) throw new Error("Stats request failed");
-      setMatchStats(await resStats.json());
+      const statsData = await resStats.json();
+      setMatchStats(statsData);
 
-      // 2. Shots
+      // 2. Shot Map
       const resShots = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/shot-map`);
       if (!resShots.ok) throw new Error("Shots request failed");
-      setShots(await resShots.json());
+      const shotsData = await resShots.json();
+      setShots(shotsData);
 
-      // 3. Passing network
-      const resPass = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/passing-network?team_id=1`);
-      if (!resPass.ok) throw new Error("Pass request failed");
-      setPassingNetwork(await resPass.json());
+      // 3. Passing Network for specific team (defaults to Home Team)
+      const targetTeamId = preferredTeamId || statsData?.home_team?.id || 1;
+      setPassingTeamId(targetTeamId);
+      await fetchPassingNetwork(matchId, targetTeamId);
+      setIsDemoMode(false);
     } catch (e) {
-      // Set dynamic mock match values
+      setIsDemoMode(true);
+      // Set dynamic mock match values matched to the selected fixture
       const currentMatch = matches.find(m => m.id === matchId);
-      const homeName = currentMatch?.home_team?.name || "Home Team";
-      const awayName = currentMatch?.away_team?.name || "Away Team";
+      const homeName = currentMatch?.home_team?.name || "Arsenal";
+      const awayName = currentMatch?.away_team?.name || "Chelsea";
+      const homeId = currentMatch?.home_team?.id || 1;
+      const awayId = currentMatch?.away_team?.id || 2;
+      const targetTeamId = preferredTeamId || homeId;
+      setPassingTeamId(targetTeamId);
 
+      // Note: Shots xG sums (0.45 + 0.25 + 0.48 + 0.60 = 1.78; 0.65 + 0.29 = 0.94)
+      // match home_team.xg (1.78) and away_team.xg (0.94)
       setMatchStats({
         match_id: matchId,
-        home_team: { name: homeName, score: 3, possession: 54.2, shots: 14, shots_on_target: 6, xg: 2.15, passes: 520, pass_completion: 86.1 },
-        away_team: { name: awayName, score: 2, possession: 45.8, shots: 10, shots_on_target: 4, xg: 1.42, passes: 410, pass_completion: 80.5 }
+        home_team: { id: homeId, name: homeName, score: 2, possession: 56.4, shots: 14, shots_on_target: 6, xg: 1.78, passes: 512, pass_completion: 84.5 },
+        away_team: { id: awayId, name: awayName, score: 1, possession: 43.6, shots: 9, shots_on_target: 3, xg: 0.94, passes: 384, pass_completion: 78.1 }
       });
       setShots([
-        {id: "s1", player_name: `${homeName} Forward`, team_name: homeName, minute: 18, second: 22, x: 108.5, y: 32.4, outcome: "Goal", xg: 0.42, body_part: "Right Foot", under_pressure: true},
-        {id: "s2", player_name: `${homeName} Striker`, team_name: homeName, minute: 64, second: 14, x: 112.0, y: 41.5, outcome: "Goal", xg: 0.58, body_part: "Head", under_pressure: false},
-        {id: "s3", player_name: `${awayName} Winger`, team_name: awayName, minute: 79, second: 50, x: 114.2, y: 38.0, outcome: "Goal", xg: 0.35, body_part: "Left Foot", under_pressure: true}
+        {"id": "s1", "player_name": `${homeName} Forward`, "team_id": homeId, "team_name": homeName, "minute": 14, "second": 22, "x": 108.5, "y": 32.4, "outcome": "Goal", "xg": 0.45, "body_part": "Right Foot", "under_pressure": true},
+        {"id": "s2", "player_name": `${homeName} Midfielder`, "team_id": homeId, "team_name": homeName, "minute": 38, "second": 5, "x": 98.0, "y": 45.2, "outcome": "Saved", "xg": 0.25, "body_part": "Left Foot", "under_pressure": false},
+        {"id": "s3", "player_name": `${awayName} Striker`, "team_id": awayId, "team_name": awayName, "minute": 44, "second": 50, "x": 114.2, "y": 38.0, "outcome": "Goal", "xg": 0.65, "body_part": "Right Foot", "under_pressure": true},
+        {"id": "s4", "player_name": `${homeName} Striker`, "team_id": homeId, "team_name": homeName, "minute": 72, "second": 14, "x": 112.0, "y": 41.5, "outcome": "Goal", "xg": 0.48, "body_part": "Head", "under_pressure": false},
+        {"id": "s5", "player_name": `${homeName} Winger`, "team_id": homeId, "team_name": homeName, "minute": 77, "second": 10, "x": 102.5, "y": 24.0, "outcome": "Saved", "xg": 0.60, "body_part": "Right Foot", "under_pressure": false},
+        {"id": "s6", "player_name": `${awayName} Attacker`, "team_id": awayId, "team_name": awayName, "minute": 85, "second": 33, "x": 92.5, "y": 28.0, "outcome": "Off Target", "xg": 0.29, "body_part": "Left Foot", "under_pressure": true}
       ]);
+      fetchMockPassingNetwork(targetTeamId, homeName, awayName, homeId, awayId);
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  const handleTeamChangeForPassing = async (teamId: number) => {
+    if (!selectedMatchId || teamId === passingTeamId) return;
+    setPassingTeamId(teamId);
+    if (!isDemoMode) {
+      await fetchPassingNetwork(selectedMatchId, teamId);
+    } else {
+      const homeName = matchStats?.home_team?.name || "Arsenal";
+      const awayName = matchStats?.away_team?.name || "Chelsea";
+      const homeId = matchStats?.home_team?.id || 1;
+      const awayId = matchStats?.away_team?.id || 2;
+      fetchMockPassingNetwork(teamId, homeName, awayName, homeId, awayId);
+    }
+  };
+
+  const fetchPassingNetwork = async (matchId: number, teamId: number) => {
+    setPassingLoading(true);
+    try {
+      const resPass = await fetch(`${API_BASE_URL}/api/v1/matches/${matchId}/passing-network?team_id=${teamId}`);
+      if (!resPass.ok) throw new Error("Pass request failed");
+      const passData = await resPass.json();
+      setPassingNetwork(passData);
+    } catch (e) {
+      const homeName = matchStats?.home_team?.name || "Arsenal";
+      const awayName = matchStats?.away_team?.name || "Chelsea";
+      const homeId = matchStats?.home_team?.id || 1;
+      const awayId = matchStats?.away_team?.id || 2;
+      fetchMockPassingNetwork(teamId, homeName, awayName, homeId, awayId);
+    } finally {
+      setPassingLoading(false);
+    }
+  };
+
+  const fetchMockPassingNetwork = (teamId: number, homeName: string, awayName: string, homeId: number, awayId: number) => {
+    const isAway = (teamId === awayId);
+    const teamPrefix = isAway ? awayName : homeName;
+
+    if (isAway) {
       setPassingNetwork({
         nodes: [
-          {id: 1, name: `${homeName} CB`, x: 34.0, y: 52.0, volume: 55},
-          {id: 2, name: `${homeName} CM`, x: 76.0, y: 50.0, volume: 48},
-          {id: 3, name: `${homeName} RW`, x: 88.0, y: 66.0, volume: 38},
-          {id: 4, name: `${homeName} ST`, x: 95.0, y: 40.0, volume: 29}
+          {id: 201, name: `${teamPrefix} GK`, x: 14.0, y: 40.0, volume: 30},
+          {id: 202, name: `${teamPrefix} RB`, x: 36.0, y: 70.0, volume: 44},
+          {id: 203, name: `${teamPrefix} CB`, x: 32.0, y: 52.0, volume: 52},
+          {id: 204, name: `${teamPrefix} CB`, x: 32.0, y: 28.0, volume: 48},
+          {id: 205, name: `${teamPrefix} LB`, x: 36.0, y: 10.0, volume: 40},
+          {id: 206, name: `${teamPrefix} DM`, x: 52.0, y: 46.0, volume: 56},
+          {id: 207, name: `${teamPrefix} DM`, x: 54.0, y: 26.0, volume: 58},
+          {id: 208, name: `${teamPrefix} RW`, x: 74.0, y: 68.0, volume: 42},
+          {id: 209, name: `${teamPrefix} AM`, x: 72.0, y: 40.0, volume: 50},
+          {id: 210, name: `${teamPrefix} LW`, x: 74.0, y: 12.0, volume: 38},
+          {id: 211, name: `${teamPrefix} CF`, x: 92.0, y: 40.0, volume: 28}
         ],
         links: [
-          {source: 1, target: 2, count: 18},
-          {source: 2, target: 3, count: 24},
-          {source: 3, target: 4, count: 12}
+          {source: 201, target: 203, count: 12},
+          {source: 201, target: 204, count: 10},
+          {source: 203, target: 202, count: 16},
+          {source: 203, target: 206, count: 18},
+          {source: 204, target: 207, count: 15},
+          {source: 204, target: 205, count: 14},
+          {source: 202, target: 208, count: 20},
+          {source: 205, target: 210, count: 17},
+          {source: 206, target: 207, count: 22},
+          {source: 206, target: 209, count: 19},
+          {source: 207, target: 209, count: 21},
+          {source: 209, target: 211, count: 16}
+        ]
+      });
+    } else {
+      setPassingNetwork({
+        nodes: [
+          {id: 1, name: `${teamPrefix} GK`, x: 12.0, y: 40.0, volume: 34},
+          {id: 2, name: `${teamPrefix} RB`, x: 38.0, y: 68.0, volume: 48},
+          {id: 3, name: `${teamPrefix} CB`, x: 34.0, y: 52.0, volume: 55},
+          {id: 4, name: `${teamPrefix} CB`, x: 34.0, y: 28.0, volume: 51},
+          {id: 5, name: `${teamPrefix} LB`, x: 38.0, y: 12.0, volume: 44},
+          {id: 6, name: `${teamPrefix} DM`, x: 55.0, y: 48.0, volume: 58},
+          {id: 7, name: `${teamPrefix} DM`, x: 58.0, y: 24.0, volume: 62},
+          {id: 8, name: `${teamPrefix} AM`, x: 76.0, y: 50.0, volume: 54},
+          {id: 9, name: `${teamPrefix} RW`, x: 88.0, y: 66.0, volume: 46},
+          {id: 10, name: `${teamPrefix} LW`, x: 86.0, y: 14.0, volume: 42},
+          {id: 11, name: `${teamPrefix} CF`, x: 95.0, y: 40.0, volume: 35}
+        ],
+        links: [
+          {source: 1, target: 3, count: 14},
+          {source: 1, target: 4, count: 12},
+          {source: 3, target: 2, count: 18},
+          {source: 3, target: 6, count: 22},
+          {source: 4, target: 7, count: 19},
+          {source: 4, target: 5, count: 15},
+          {source: 2, target: 6, count: 11},
+          {source: 2, target: 9, count: 25},
+          {source: 5, target: 7, count: 14},
+          {source: 5, target: 10, count: 18},
+          {source: 6, target: 8, count: 20},
+          {source: 7, target: 8, count: 15},
+          {source: 8, target: 9, count: 24},
+          {source: 8, target: 11, count: 17}
         ]
       });
     }
@@ -254,9 +371,13 @@ export default function Home() {
     }
   };
 
-  const fetchPlayerSimilarity = async (playerId: number) => {
+  const fetchPlayerSimilarity = async (playerId: number, count: number = 10) => {
+    setSimilarityLoading(true);
+    setSimilarityData(null);
+    setSelectedMatchPlayer(null);
+
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/players/${playerId}/similar?top_n=3`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/players/${playerId}/similar?top_n=${count}`);
       if (!res.ok) throw new Error("Similarity request failed");
       const data = await res.json();
       if (data && data.similar_players && data.similar_players.length > 0) {
@@ -266,38 +387,167 @@ export default function Home() {
         throw new Error("No similarity data found");
       }
     } catch (e) {
-      // Mock player similarity values
+      // Mock player similarity values with multiple realistic nearest neighbors
       const pName = playersList.find(p => p.player_id === playerId)?.player_name || "Bukayo Saka";
-      const isSaka = pName.includes("Saka");
-      const isOdegaard = pName.includes("Odegaard");
+      const isSaka = pName.toLowerCase().includes("saka");
+      const isVanDijk = pName.toLowerCase().includes("dijk");
 
-      const mockMatches: MatchPlayer[] = isSaka ? [
-        {
-          player_id: 2, player_name: "Lionel Messi", similarity_score: 0.9125,
-          explanation: "Highly overlapping statistics in right-wing inside progression. Both generate massive progressive carries and key passes into the final third.",
-          umap_x: 1.5, umap_y: 3.2,
-          radar_comparison: [
-            {metric: "Goals Per 90", player_value: 0.52, player_percentile: 88, match_value: 0.65, match_percentile: 94},
-            {metric: "Key Passes Per 90", player_value: 2.2, player_percentile: 90, match_value: 2.8, match_percentile: 96},
-            {metric: "Passes Per 90", player_value: 42.1, player_percentile: 82, match_value: 58.4, match_percentile: 91},
-            {metric: "Tackles Per 90", player_value: 0.95, player_percentile: 62, match_value: 0.25, match_percentile: 32},
-            {metric: "Carries Per 90", player_value: 38.5, player_percentile: 89, match_value: 41.2, match_percentile: 92}
-          ]
-        }
-      ] : [
-        {
-          player_id: 12, player_name: "Kevin De Bruyne", similarity_score: 0.8842,
-          explanation: "Similar playmaker signatures. High density of progressive passes in the right half-spaces and key chances created.",
-          umap_x: -0.5, umap_y: 2.5,
-          radar_comparison: [
-            {metric: "Goals Per 90", player_value: 0.31, player_percentile: 78, match_value: 0.38, match_percentile: 82},
-            {metric: "Key Passes Per 90", player_value: 3.1, player_percentile: 94, match_value: 3.8, match_percentile: 98},
-            {metric: "Passes Per 90", player_value: 62.4, player_percentile: 89, match_value: 70.2, match_percentile: 93},
-            {metric: "Tackles Per 90", player_value: 1.2, player_percentile: 71, match_value: 0.8, match_percentile: 55},
-            {metric: "Carries Per 90", player_value: 28.5, player_percentile: 76, match_value: 31.0, match_percentile: 80}
-          ]
-        }
-      ];
+      let mockMatches: MatchPlayer[] = [];
+      if (isSaka) {
+        mockMatches = [
+          {
+            player_id: 2, player_name: "Lionel Messi", similarity_score: 0.925,
+            explanation: "Highly overlapping statistics in right-wing inside progression. Both generate massive progressive carries and key passes into the final third.",
+            umap_x: 1.5, umap_y: 3.2,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.52, player_percentile: 88, match_value: 0.65, match_percentile: 94},
+              {metric: "Key Passes Per 90", player_value: 2.2, player_percentile: 90, match_value: 2.8, match_percentile: 96},
+              {metric: "Passes Per 90", player_value: 42.1, player_percentile: 82, match_value: 58.4, match_percentile: 91},
+              {metric: "Tackles Per 90", player_value: 0.95, player_percentile: 62, match_value: 0.25, match_percentile: 32},
+              {metric: "Carries Per 90", player_value: 38.5, player_percentile: 89, match_value: 41.2, match_percentile: 92}
+            ]
+          },
+          {
+            player_id: 3, player_name: "Mohamed Salah", similarity_score: 0.895,
+            explanation: "Elite wide forward profile with high box entries, direct shot volume, and transition goal threat from the right flank.",
+            umap_x: 1.8, umap_y: 3.6,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.52, player_percentile: 88, match_value: 0.72, match_percentile: 98},
+              {metric: "Key Passes Per 90", player_value: 2.2, player_percentile: 90, match_value: 2.1, match_percentile: 88},
+              {metric: "Passes Per 90", player_value: 42.1, player_percentile: 82, match_value: 36.2, match_percentile: 74},
+              {metric: "Tackles Per 90", player_value: 0.95, player_percentile: 62, match_value: 0.55, match_percentile: 45},
+              {metric: "Carries Per 90", player_value: 38.5, player_percentile: 89, match_value: 35.8, match_percentile: 84}
+            ]
+          },
+          {
+            player_id: 4, player_name: "Raphinha", similarity_score: 0.872,
+            explanation: "Inverted winger profile creating dangerous deliveries into the half-spaces with high work rate in defensive transition.",
+            umap_x: 1.3, umap_y: 2.9,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.52, player_percentile: 88, match_value: 0.44, match_percentile: 82},
+              {metric: "Key Passes Per 90", player_value: 2.2, player_percentile: 90, match_value: 2.5, match_percentile: 93},
+              {metric: "Passes Per 90", player_value: 42.1, player_percentile: 82, match_value: 40.5, match_percentile: 80},
+              {metric: "Tackles Per 90", player_value: 0.95, player_percentile: 62, match_value: 1.25, match_percentile: 75},
+              {metric: "Carries Per 90", player_value: 38.5, player_percentile: 89, match_value: 32.1, match_percentile: 78}
+            ]
+          },
+          {
+            player_id: 5, player_name: "Rodrygo", similarity_score: 0.861,
+            explanation: "Versatile technician excelling in 1v1 dribbles, quick combination play in tight spaces, and penalty box entries.",
+            umap_x: 1.1, umap_y: 2.7,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.52, player_percentile: 88, match_value: 0.48, match_percentile: 85},
+              {metric: "Key Passes Per 90", player_value: 2.2, player_percentile: 90, match_value: 1.9, match_percentile: 82},
+              {metric: "Passes Per 90", player_value: 42.1, player_percentile: 82, match_value: 38.0, match_percentile: 76},
+              {metric: "Tackles Per 90", player_value: 0.95, player_percentile: 62, match_value: 0.80, match_percentile: 55},
+              {metric: "Carries Per 90", player_value: 38.5, player_percentile: 89, match_value: 36.4, match_percentile: 86}
+            ]
+          },
+          {
+            player_id: 6, player_name: "Michael Olise", similarity_score: 0.849,
+            explanation: "Creative outlet from wide areas featuring high expected assists (xA) and pinpoint crosses from deep build-up.",
+            umap_x: 1.4, umap_y: 2.5,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.52, player_percentile: 88, match_value: 0.38, match_percentile: 78},
+              {metric: "Key Passes Per 90", player_value: 2.2, player_percentile: 90, match_value: 2.7, match_percentile: 95},
+              {metric: "Passes Per 90", player_value: 42.1, player_percentile: 82, match_value: 45.2, match_percentile: 86},
+              {metric: "Tackles Per 90", player_value: 0.95, player_percentile: 62, match_value: 1.10, match_percentile: 68},
+              {metric: "Carries Per 90", player_value: 38.5, player_percentile: 89, match_value: 30.2, match_percentile: 74}
+            ]
+          }
+        ];
+      } else if (isVanDijk) {
+        mockMatches = [
+          {
+            player_id: 27, player_name: "William Saliba", similarity_score: 0.918,
+            explanation: "Elite modern center-back profile. Dominant in defensive duels, press-resistant passing from the back, and sweeping recovery pace.",
+            umap_x: -3.2, umap_y: -4.0,
+            radar_comparison: [
+              {metric: "Passes Per 90", player_value: 75.4, player_percentile: 96, match_value: 71.8, match_percentile: 94},
+              {metric: "Tackles Per 90", player_value: 1.4, player_percentile: 68, match_value: 1.6, match_percentile: 74},
+              {metric: "Aerial Won %", player_value: 74.2, player_percentile: 95, match_value: 68.5, match_percentile: 88},
+              {metric: "Interceptions Per 90", player_value: 1.8, player_percentile: 84, match_value: 1.5, match_percentile: 78},
+              {metric: "Carries Per 90", player_value: 52.0, player_percentile: 92, match_value: 48.5, match_percentile: 89}
+            ]
+          },
+          {
+            player_id: 28, player_name: "Ruben Dias", similarity_score: 0.884,
+            explanation: "Commanding central defender with high volume distribution, block efficiency, and leadership in defensive organization.",
+            umap_x: -3.0, umap_y: -4.3,
+            radar_comparison: [
+              {metric: "Passes Per 90", player_value: 75.4, player_percentile: 96, match_value: 79.2, match_percentile: 98},
+              {metric: "Tackles Per 90", player_value: 1.4, player_percentile: 68, match_value: 1.3, match_percentile: 64},
+              {metric: "Aerial Won %", player_value: 74.2, player_percentile: 95, match_value: 65.0, match_percentile: 82},
+              {metric: "Interceptions Per 90", player_value: 1.8, player_percentile: 84, match_value: 1.4, match_percentile: 74},
+              {metric: "Carries Per 90", player_value: 52.0, player_percentile: 92, match_value: 54.1, match_percentile: 94}
+            ]
+          },
+          {
+            player_id: 29, player_name: "Gabriel Magalhaes", similarity_score: 0.865,
+            explanation: "Aggressive front-foot defender, physical aerial box presence, and left-sided progressive passing outlet.",
+            umap_x: -3.1, umap_y: -3.8,
+            radar_comparison: [
+              {metric: "Passes Per 90", player_value: 75.4, player_percentile: 96, match_value: 68.4, match_percentile: 90},
+              {metric: "Tackles Per 90", player_value: 1.4, player_percentile: 68, match_value: 1.7, match_percentile: 78},
+              {metric: "Aerial Won %", player_value: 74.2, player_percentile: 95, match_value: 69.2, match_percentile: 90},
+              {metric: "Interceptions Per 90", player_value: 1.8, player_percentile: 84, match_value: 1.2, match_percentile: 68},
+              {metric: "Carries Per 90", player_value: 52.0, player_percentile: 92, match_value: 45.0, match_percentile: 85}
+            ]
+          }
+        ];
+      } else {
+        // Default / Martin Odegaard Playmaker
+        mockMatches = [
+          {
+            player_id: 12, player_name: "Kevin De Bruyne", similarity_score: 0.894,
+            explanation: "Similar playmaker signatures. High density of progressive passes in the right half-spaces and key chances created.",
+            umap_x: -0.5, umap_y: 2.5,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.31, player_percentile: 78, match_value: 0.38, match_percentile: 82},
+              {metric: "Key Passes Per 90", player_value: 3.1, player_percentile: 94, match_value: 3.8, match_percentile: 98},
+              {metric: "Passes Per 90", player_value: 62.4, player_percentile: 89, match_value: 70.2, match_percentile: 93},
+              {metric: "Tackles Per 90", player_value: 1.2, player_percentile: 71, match_value: 0.8, match_percentile: 55},
+              {metric: "Carries Per 90", player_value: 28.5, player_percentile: 76, match_value: 31.0, match_percentile: 80}
+            ]
+          },
+          {
+            player_id: 13, player_name: "Florian Wirtz", similarity_score: 0.875,
+            explanation: "Modern advanced playmaker with dynamic half-turn reception, sharp through-balls, and defensive counter-pressing.",
+            umap_x: -0.6, umap_y: 2.2,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.31, player_percentile: 78, match_value: 0.42, match_percentile: 86},
+              {metric: "Key Passes Per 90", player_value: 3.1, player_percentile: 94, match_value: 2.9, match_percentile: 91},
+              {metric: "Passes Per 90", player_value: 62.4, player_percentile: 89, match_value: 58.1, match_percentile: 85},
+              {metric: "Tackles Per 90", player_value: 1.2, player_percentile: 71, match_value: 1.4, match_percentile: 76},
+              {metric: "Carries Per 90", player_value: 28.5, player_percentile: 76, match_value: 34.5, match_percentile: 86}
+            ]
+          },
+          {
+            player_id: 14, player_name: "James Maddison", similarity_score: 0.852,
+            explanation: "Attacking midfielder profile centered around set-piece delivery, shot creation from zone 14, and high key pass volume.",
+            umap_x: -0.4, umap_y: 2.0,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.31, player_percentile: 78, match_value: 0.28, match_percentile: 74},
+              {metric: "Key Passes Per 90", player_value: 3.1, player_percentile: 94, match_value: 2.8, match_percentile: 90},
+              {metric: "Passes Per 90", player_value: 62.4, player_percentile: 89, match_value: 54.0, match_percentile: 80},
+              {metric: "Tackles Per 90", player_value: 1.2, player_percentile: 71, match_value: 1.1, match_percentile: 65},
+              {metric: "Carries Per 90", player_value: 28.5, player_percentile: 76, match_value: 26.2, match_percentile: 70}
+            ]
+          },
+          {
+            player_id: 15, player_name: "Bernardo Silva", similarity_score: 0.841,
+            explanation: "Elite ball retention in high-pressure midfield zones, tempo control, and progressive circulation.",
+            umap_x: -0.7, umap_y: 2.1,
+            radar_comparison: [
+              {metric: "Goals Per 90", player_value: 0.31, player_percentile: 78, match_value: 0.25, match_percentile: 70},
+              {metric: "Key Passes Per 90", player_value: 3.1, player_percentile: 94, match_value: 2.4, match_percentile: 86},
+              {metric: "Passes Per 90", player_value: 62.4, player_percentile: 89, match_value: 66.8, match_percentile: 92},
+              {metric: "Tackles Per 90", player_value: 1.2, player_percentile: 71, match_value: 1.8, match_percentile: 82},
+              {metric: "Carries Per 90", player_value: 28.5, player_percentile: 76, match_value: 36.0, match_percentile: 88}
+            ]
+          }
+        ];
+      }
 
       setSimilarityData({
         player_id: playerId,
@@ -305,6 +555,8 @@ export default function Home() {
         similar_players: mockMatches
       });
       setSelectedMatchPlayer(mockMatches[0]);
+    } finally {
+      setSimilarityLoading(false);
     }
   };
 
@@ -356,8 +608,10 @@ export default function Home() {
         {/* MLOps controls */}
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-green-950/30 border border-green-800/40 rounded-full text-xs">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span className="text-green-400 font-semibold text-[10px] uppercase">Service Online</span>
+            <span className={`w-2 h-2 rounded-full ${isDemoMode ? "bg-amber-400" : "bg-green-500"} animate-pulse`}></span>
+            <span className={`${isDemoMode ? "text-amber-300" : "text-green-400"} font-semibold text-[10px] uppercase`}>
+              {isDemoMode ? "Demo / Simulation Mode" : "Live Service Online"}
+            </span>
           </div>
 
           <button
@@ -478,8 +732,16 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Match Loading State */}
+              {matchLoading && (
+                <div className="bg-card/50 border border-border/80 rounded-xl p-12 text-center flex flex-col items-center justify-center gap-3 min-h-[300px]">
+                  <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-300">Loading match statistics & shot coordinates...</p>
+                </div>
+              )}
+
               {/* Match Stats Splits */}
-              {matchStats && (
+              {!matchLoading && matchStats && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Scoreboard and general stats */}
                   <div className="md:col-span-1 bg-card border border-border p-5 rounded-xl flex flex-col justify-between shadow-md">
@@ -543,9 +805,17 @@ export default function Home() {
               )}
 
               {/* Passing Network */}
-              {passingNetwork && (
+              {!matchLoading && passingNetwork && (
                 <div className="border border-border bg-card/25 p-5 rounded-xl">
-                  <PassingNetwork nodes={passingNetwork.nodes} links={passingNetwork.links} />
+                  <PassingNetwork 
+                    nodes={passingNetwork.nodes} 
+                    links={passingNetwork.links} 
+                    homeTeam={matchStats?.home_team}
+                    awayTeam={matchStats?.away_team}
+                    selectedTeamId={passingTeamId || matchStats?.home_team?.id}
+                    onSelectTeam={handleTeamChangeForPassing}
+                    isLoading={passingLoading}
+                  />
                 </div>
               )}
             </div>
@@ -572,14 +842,27 @@ export default function Home() {
                 </div>
               </div>
 
-              {similarityData && (
+              {/* Similarity Loading State */}
+              {similarityLoading && (
+                <div className="bg-card/50 border border-border/80 rounded-xl p-12 text-center flex flex-col items-center justify-center gap-3 min-h-[350px]">
+                  <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-semibold text-slate-300">Searching high-dimensional feature embeddings & finding nearest neighbors...</p>
+                </div>
+              )}
+
+              {!similarityLoading && similarityData && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                   {/* Similarity List Sidebar */}
                   <div className="lg:col-span-1 bg-card border border-border rounded-xl p-4 space-y-3">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Nearest Neighbors (Top Matches)
-                    </h4>
-                    <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Nearest Neighbors
+                      </h4>
+                      <span className="text-[10px] font-bold px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full border border-green-500/20">
+                        {similarityData.similar_players ? similarityData.similar_players.length : 0} Matches
+                      </span>
+                    </div>
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
                       {similarityData.similar_players && similarityData.similar_players.map((match: MatchPlayer) => (
                         <button
                           key={match.player_id}
@@ -590,7 +873,7 @@ export default function Home() {
                               : "bg-background/40 border-border/80 text-slate-300 hover:bg-slate-800/20"
                           }`}
                         >
-                          <div className="font-bold flex justify-between">
+                          <div className="font-bold flex justify-between items-center">
                             <span>{match.player_name}</span>
                             <span className="text-green-500 font-black">
                               {(match.similarity_score * 100).toFixed(1)}%
@@ -613,10 +896,16 @@ export default function Home() {
                       />
                     ) : (
                       <div className="bg-card border border-border rounded-xl p-8 text-center text-xs text-muted-foreground flex items-center justify-center min-h-[350px]">
-                        Select a player from the neighbors list to view radar metrics.
+                        Select a player from the nearest neighbors list to view radar metrics comparison.
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {!similarityLoading && !similarityData && (
+                <div className="bg-card border border-border rounded-xl p-8 text-center text-xs text-muted-foreground flex items-center justify-center min-h-[350px]">
+                  Select a player above to calculate multi-metric cosine distance and generate statistical radar charts.
                 </div>
               )}
             </div>

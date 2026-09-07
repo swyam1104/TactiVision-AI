@@ -18,9 +18,22 @@ export interface PassLink {
 interface PassingNetworkProps {
   nodes: PassNode[];
   links: PassLink[];
+  homeTeam?: { id: number; name: string };
+  awayTeam?: { id: number; name: string };
+  selectedTeamId?: number;
+  onSelectTeam?: (teamId: number) => void;
+  isLoading?: boolean;
 }
 
-export default function PassingNetwork({ nodes, links }: PassingNetworkProps) {
+export default function PassingNetwork({ 
+  nodes, 
+  links, 
+  homeTeam, 
+  awayTeam, 
+  selectedTeamId, 
+  onSelectTeam, 
+  isLoading 
+}: PassingNetworkProps) {
   const [hoveredNode, setHoveredNode] = useState<PassNode | null>(null);
 
   // Find node coordinates by ID for lines
@@ -28,16 +41,53 @@ export default function PassingNetwork({ nodes, links }: PassingNetworkProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-100">Passing Network & Build-up Structure</h3>
-        <div className="text-xs text-muted-foreground">
-          Showing average positions and pass links (min. 3 passes)
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-100">Passing Network & Build-up Structure</h3>
+          <div className="text-xs text-muted-foreground">
+            Showing average positions and pass links (min. 2 passes)
+          </div>
         </div>
+
+        {homeTeam && awayTeam && onSelectTeam && (
+          <div className="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-lg border border-border self-start sm:self-auto">
+            <button
+              onClick={() => onSelectTeam(homeTeam.id)}
+              disabled={isLoading}
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                selectedTeamId === homeTeam.id
+                  ? "bg-green-600 text-slate-950 shadow"
+                  : "text-slate-400 hover:text-slate-200"
+              } disabled:opacity-50`}
+            >
+              {homeTeam.name}
+            </button>
+            <button
+              onClick={() => onSelectTeam(awayTeam.id)}
+              disabled={isLoading}
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                selectedTeamId === awayTeam.id
+                  ? "bg-green-600 text-slate-950 shadow"
+                  : "text-slate-400 hover:text-slate-200"
+              } disabled:opacity-50`}
+            >
+              {awayTeam.name}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Network Overlay */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 relative">
+          {isLoading && (
+            <div className="absolute inset-0 z-20 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center rounded-lg">
+              <div className="flex items-center gap-2 text-xs font-semibold text-green-400">
+                <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                <span>Computing passing network...</span>
+              </div>
+            </div>
+          )}
           <Pitch>
             {/* Draw Links (passing pathways) first so they sit underneath nodes */}
             {links.map((link, idx) => {

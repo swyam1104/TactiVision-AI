@@ -32,3 +32,11 @@ frontend/.env.local
 .DS_Store
 .vscode/
 .idea/
+
+# ML Models (auto-generated at runtime)
+*.pkl
+backend/ml/**/*.pkl
+
+# TypeScript build cache
+*.tsbuildinfo
+frontend/tsconfig.tsbuildinfo

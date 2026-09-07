@@ -4,6 +4,7 @@ import Pitch from "./Pitch";
 export interface Shot {
   id: string;
   player_name: string;
+  team_id?: number;
   team_name: string;
   minute: number;
   second: number;

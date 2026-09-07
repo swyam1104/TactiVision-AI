@@ -75,3 +75,47 @@ def test_similarity_neighbors():
         assert 0.0 <= n["similarity_score"] <= 1.0
         assert len(n["radar_comparison"]) > 0
         assert "explanation" in n
+
+
+def test_mock_match_stats_xg_consistency():
+    """Verify that mock shot map xG totals match the mock match stats xG summary."""
+    from app.services.analytics_service import analytics_service
+    
+    stats = analytics_service._get_mock_match_stats(match_id=1, home_id=1, away_id=2)
+    shots = analytics_service._get_mock_shot_map(match_id=1, home_id=1, away_id=2)
+    
+    home_shots_xg = round(sum(s["xg"] for s in shots if s["team_id"] == 1), 2)
+    away_shots_xg = round(sum(s["xg"] for s in shots if s["team_id"] == 2), 2)
+    
+    assert home_shots_xg == stats["home_team"]["xg"], f"Expected {stats['home_team']['xg']}, got {home_shots_xg}"
+    assert away_shots_xg == stats["away_team"]["xg"], f"Expected {stats['away_team']['xg']}, got {away_shots_xg}"
+
+
+def test_mock_passing_network_teams_and_determinism():
+    """Verify that home and away passing networks are distinct and deterministic."""
+    from app.services.analytics_service import analytics_service
+    
+    home_net = analytics_service._get_mock_passing_network(team_id=1)
+    away_net = analytics_service._get_mock_passing_network(team_id=2)
+    
+    # 1. Determinism: calling it twice produces identical results
+    home_net_again = analytics_service._get_mock_passing_network(team_id=1)
+    assert [n["volume"] for n in home_net["nodes"]] == [n["volume"] for n in home_net_again["nodes"]]
+    
+    # 2. Team distinction: home vs away nodes are different
+    assert home_net["team_id"] == 1
+    assert away_net["team_id"] == 2
+    assert home_net["nodes"][0]["id"] != away_net["nodes"][0]["id"]
+    assert home_net["nodes"][0]["name"] != away_net["nodes"][0]["name"]
+
+
+def test_mock_touches_within_pitch_bounds():
+    """Verify that touch coordinates are clipped within pitch boundaries [0-120, 0-80]."""
+    from app.services.analytics_service import analytics_service
+    
+    touches = analytics_service._get_mock_touches()
+    assert len(touches) > 0
+    for t in touches:
+        assert 0.0 <= t["x"] <= 120.0
+        assert 0.0 <= t["y"] <= 80.0
+
