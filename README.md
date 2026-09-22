@@ -17,7 +17,7 @@ Instead of simply presenting raw statistics, TactiVision AI is designed around a
 ### 🌐 Frontend
 
 **Live Application:**  
-https://tacti-vision-ai211.vercel.app/
+(https://tacti-vision-ai.vercel.app/)
 
 
 ### 📦 Source Code
