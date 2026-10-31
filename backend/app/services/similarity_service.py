@@ -14,17 +14,22 @@ class SimilarityService:
         self._load_model()
         
     def _load_model(self):
-        """Load similarity artifacts. If not found, try to run training to initialize."""
+        """Load similarity artifacts. If not found or version-incompatible, re-train."""
         if os.path.exists(self.model_path):
             try:
                 with open(self.model_path, "rb") as f:
                     self.model_data = pickle.load(f)
                 logger.info(f"Player Similarity Model loaded successfully. {len(self.model_data['df'])} players indexed.")
+                return
             except Exception as e:
-                logger.error(f"Error loading similarity model from {self.model_path}: {e}")
+                logger.error(
+                    f"Similarity model at {self.model_path} failed to load "
+                    f"(possible Python/sklearn version mismatch: {e}). Re-training..."
+                )
                 self.model_data = None
+                self._trigger_training()
         else:
-            logger.warn(f"Similarity model file not found at {self.model_path}. Will trigger training.")
+            logger.warning(f"Similarity model file not found at {self.model_path}. Will trigger training.")
             self._trigger_training()
             
     def _trigger_training(self):
@@ -32,7 +37,7 @@ class SimilarityService:
         try:
             from ml.similarity.train_similarity import train_similarity_model
             train_similarity_model()
-            # Try reloading
+            # Try reloading after training
             if os.path.exists(self.model_path):
                 with open(self.model_path, "rb") as f:
                     self.model_data = pickle.load(f)
@@ -112,7 +117,6 @@ class SimilarityService:
                 })
                 
             # Explain why they are similar
-            # Find the metrics that are closest in standard deviation space
             target_scaled = X_scaled[player_idx]
             neighbor_scaled = X_scaled[idx]
             differences = np.abs(target_scaled - neighbor_scaled)
