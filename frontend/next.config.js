@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const rawBackendUrl = process.env.BACKEND_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'https://tactivision-backend.onrender.com');
+  (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'https://tactivision-ai-1.onrender.com');
 const backendUrl = rawBackendUrl.replace(/\/$/, '');
 
 const nextConfig = {

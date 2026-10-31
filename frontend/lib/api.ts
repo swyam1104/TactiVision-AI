@@ -6,4 +6,4 @@
 // 3. Mixed Content warnings
 export const API_BASE_URL = typeof window !== 'undefined'
   ? ''
-  : (process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'https://tactivision-backend.onrender.com').replace(/\/$/, '');
+  : (process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'https://tactivision-ai-1.onrender.com').replace(/\/$/, '');
