@@ -17,8 +17,12 @@ Instead of simply presenting raw statistics, TactiVision AI is designed around a
 ### 🌐 Frontend
 
 **Live Application:**  
-(https://tacti-vision-ai.vercel.app/)
+https://tacti-vision-ai1.vercel.app/
 
+### ⚡ Backend API (Render)
+
+**Live API & Documentation:**  
+https://tactivision-ai-1.onrender.com/docs
 
 ### 📦 Source Code
 
@@ -201,3 +205,4 @@ Which team generated better shot quality?
 What explains the difference in attacking performance?
 
 Which players appear most involved in progression?
+```
