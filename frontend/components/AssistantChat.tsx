@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles, FileText, ChevronRight } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 
@@ -33,6 +33,14 @@ export default function AssistantChat() {
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<Citation | null>(null);
+
+  // Ref to scroll to the bottom of the chat
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to latest message on every update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -105,13 +113,13 @@ export default function AssistantChat() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[550px] bg-card border border-border rounded-xl overflow-hidden shadow-lg">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[600px] bg-card border border-border rounded-xl overflow-hidden shadow-lg">
       
       {/* Dialog History */}
-      <div className="lg:col-span-3 flex flex-col justify-between h-full bg-background/20">
+      <div className="lg:col-span-3 flex flex-col h-full bg-background/20 min-h-0">
         
         {/* Header */}
-        <div className="flex items-center gap-2 border-b border-border/50 p-4 bg-card/60">
+        <div className="flex items-center gap-2 border-b border-border/50 p-4 bg-card/60 shrink-0">
           <Bot className="w-5 h-5 text-green-500" />
           <div>
             <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
@@ -121,8 +129,8 @@ export default function AssistantChat() {
           </div>
         </div>
 
-        {/* Scrollable bubble container */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Scrollable bubble container — flex-1 + min-h-0 make this properly scrollable */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -178,10 +186,12 @@ export default function AssistantChat() {
               </div>
             </div>
           )}
+          {/* Invisible anchor div — auto-scroll target */}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Bar & Suggestion Chips */}
-        <div className="border-t border-border/50 p-4 bg-card/40 space-y-3">
+        <div className="border-t border-border/50 p-4 bg-card/40 space-y-3 shrink-0">
           {messages.length === 1 && (
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((sug, i) => (
@@ -216,7 +226,7 @@ export default function AssistantChat() {
       </div>
 
       {/* Citation snippet inspector right sidebar */}
-      <div className="lg:col-span-1 border-l border-border/50 p-4 flex flex-col h-full justify-between bg-card/20">
+      <div className="lg:col-span-1 border-l border-border/50 p-4 flex flex-col h-full justify-between bg-card/20 min-h-0">
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
             <FileText className="w-3.5 h-3.5" /> Source Document
