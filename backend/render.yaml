@@ -9,12 +9,8 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        value: sqlite:////data/tactivision.db
+        value: sqlite:////app/tactivision.db
       - key: GEMINI_API_KEY
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-    disk:
-      name: tactivision-data
-      mountPath: /data
-      sizeGB: 5

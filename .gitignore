@@ -19,9 +19,9 @@ backend/app/*/__pycache__/
 backend/ml/*/__pycache__/
 
 # Database & SQLite
-*.db
+*.db*
 *.sqlite3
-backend/*.db
+backend/*.db*
 backend/data/
 
 # Environment variables
@@ -34,9 +34,9 @@ frontend/.env.local
 .vscode/
 .idea/
 
-# ML Models (auto-generated at runtime)
-*.pkl
-backend/ml/**/*.pkl
+# ML Models (whitelist trained models)
+!backend/ml/xg_model/xg_model.pkl
+!backend/ml/similarity/similarity.pkl
 
 # TypeScript build cache
 *.tsbuildinfo

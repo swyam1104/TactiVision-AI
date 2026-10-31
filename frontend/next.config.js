@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
-const backendUrl = process.env.BACKEND_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'https://tactivision-backend-production.up.railway.app');
+const rawBackendUrl = process.env.BACKEND_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'https://tactivision-backend.onrender.com');
+const backendUrl = rawBackendUrl.replace(/\/$/, '');
 
 const nextConfig = {
   reactStrictMode: true,

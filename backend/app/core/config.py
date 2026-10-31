@@ -1,23 +1,40 @@
 import os
 import sys
+import gzip
+import shutil
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 def _get_default_db_url() -> str:
-    # If running on Linux container with /data mount (e.g. Railway volume):
-    if sys.platform != "win32" and Path("/data").is_dir():
+    # 1. Check if an external /data/tactivision.db exists (e.g. mounted persistent volume)
+    if Path("/data/tactivision.db").exists():
         return "sqlite:////data/tactivision.db"
-    # Otherwise default to the local SQLite database in the backend folder
+    
     local_db = _BASE_DIR / "tactivision.db"
+    local_db_gz = _BASE_DIR / "tactivision.db.gz"
+
+    # Automatically decompress tactivision.db.gz if tactivision.db is not extracted yet
+    if not local_db.exists() and local_db_gz.exists():
+        try:
+            with gzip.open(local_db_gz, "rb") as f_in:
+                with open(local_db, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        except Exception:
+            pass
+
+    # 2. Check local database in backend folder (/app/tactivision.db in container or local backend/tactivision.db)
+    if local_db.exists():
+        return f"sqlite:///{str(local_db).replace(os.sep, '/')}"
+    # 3. Default fallback
     return f"sqlite:///{str(local_db).replace(os.sep, '/')}"
 
 def _resolve_model_path(subfolder: str, filename: str) -> str:
     local_path = _BASE_DIR / "ml" / subfolder / filename
     if local_path.exists():
         return str(local_path)
-    if sys.platform != "win32" and Path("/data").is_dir():
+    if Path(f"/data/{filename}").exists():
         return f"/data/{filename}"
     return str(local_path)
 
