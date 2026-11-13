@@ -33,7 +33,7 @@ app.add_middleware(
 # Include API Router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {
         "status": "online",
@@ -41,7 +41,7 @@ def read_root():
         "docs_url": "/docs"
     }
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "healthy"}
 
