@@ -33,17 +33,35 @@ class SimilarityService:
             self._trigger_training()
             
     def _trigger_training(self):
-        """Train model in-process to create fallback dataset."""
+        """Build lightweight fallback similarity dataset without heavy full-DB scans."""
         try:
-            from ml.similarity.train_similarity import train_similarity_model
-            train_similarity_model()
-            # Try reloading after training
-            if os.path.exists(self.model_path):
-                with open(self.model_path, "rb") as f:
-                    self.model_data = pickle.load(f)
-                logger.info("Successfully trained and loaded similarity model on startup.")
+            from ml.similarity.train_similarity import generate_synthetic_players, FEATURE_COLUMNS
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.neighbors import NearestNeighbors
+            from sklearn.decomposition import PCA
+            
+            df = generate_synthetic_players()
+            X = df[FEATURE_COLUMNS].values
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            
+            nn_model = NearestNeighbors(n_neighbors=min(6, len(df)), metric="cosine")
+            nn_model.fit(X_scaled)
+            
+            pca = PCA(n_components=2, random_state=42)
+            coords = pca.fit_transform(X_scaled)
+            df["umap_x"] = coords[:, 0]
+            df["umap_y"] = coords[:, 1]
+            
+            self.model_data = {
+                "df": df,
+                "scaler": scaler,
+                "nn_model": nn_model,
+                "features": FEATURE_COLUMNS
+            }
+            logger.info(f"Initialized lightweight fallback similarity model with {len(df)} players.")
         except Exception as e:
-            logger.error(f"Failed to auto-train similarity model: {e}")
+            logger.error(f"Failed to auto-train fallback similarity model: {e}")
 
     def get_all_players(self):
         """Get list of all indexed players."""

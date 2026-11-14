@@ -19,10 +19,11 @@ backend/app/*/__pycache__/
 backend/ml/*/__pycache__/
 
 # Database & SQLite
-*.db*
+*.db
 *.sqlite3
-backend/*.db*
+backend/*.db
 backend/data/
+!backend/tactivision.db.gz
 
 # Environment variables
 .env

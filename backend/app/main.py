@@ -57,14 +57,7 @@ def initialize_database_and_models():
         try:
             match_count = db.query(Match).count()
             if match_count == 0:
-                logger.info("Database is empty. Initiating automatic data ingestion pipeline...")
-                # Run ingestion inline for startup, or in thread.
-                # In thread prevents blocking FastAPI startup and allows fast health check reporting
-                run_pipeline()
-                logger.info("Startup data ingestion complete. Training models...")
-                train_and_evaluate()
-                train_similarity_model()
-                logger.info("Startup training complete.")
+                logger.info("Database empty. Matches will be populated via ETL dashboard on demand.")
             else:
                 logger.info(f"Database verified. Found {match_count} matches.")
                 
